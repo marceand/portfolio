@@ -1,0 +1,45 @@
+baseURL = 'https://example.org/'
+languageCode = 'en-us'
+title = 'Marcelino'
+theme = "gokarna"
+
+enableRobotsTXT = true
+
+[params]
+  footer = "Marcelino"
+  description = "Sky above, sand below and peace within"
+  avatarURL = "/images/marcelino-avatar.jpg"
+  AvatarAltText = "avatar"
+  avatarSize = "size-m"
+
+  socialIcons = [
+    {name = "twitter", url = "https://example.com"},
+    {name = "linkedin", url = "https://example.com"},
+    {name = "github", url = "https://example.com"},
+    {name = "email", url = "mailto:example@example.com"}
+  ]
+
+[menu]
+  [[menu.main]]
+    name = "Home"
+    pre = "<span data-feather='home'></span>"
+    url = "/"
+    weight = 1
+
+  [[menu.main]]
+    name = "About"
+    pre = "<span data-feather='user'></span>"
+    url = "/"
+    weight = 2
+
+  [[menu.main]]
+    name = "Posts"
+    pre = "<span data-feather='book'></span>"
+    url = "/posts/"
+    weight = 2
+
+  [[menu.main]]
+    name = "Projects"
+    pre = "<span data-feather='code'></span>"
+    url = "/projects/"
+    weight = 3
