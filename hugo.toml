@@ -1,13 +1,12 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
-title = 'Marcelino'
+title = 'Marcelino Yax'
 theme = "gokarna"
 
 enableRobotsTXT = true
 
 [params]
   footer = "Marcelino"
-  description = "Sky above, sand below and peace within"
   avatarURL = "/images/marcelino-avatar.jpg"
   AvatarAltText = "avatar"
   avatarSize = "size-m"
@@ -27,19 +26,19 @@ enableRobotsTXT = true
     weight = 1
 
   [[menu.main]]
-    name = "About"
+    name = "Resume"
     pre = "<span data-feather='user'></span>"
-    url = "/"
-    weight = 2
-
-  [[menu.main]]
-    name = "Posts"
-    pre = "<span data-feather='book'></span>"
-    url = "/posts/"
+    url = "/about/resume"
     weight = 2
 
   [[menu.main]]
     name = "Projects"
     pre = "<span data-feather='code'></span>"
-    url = "/projects/"
+    url = "/projects/project"
     weight = 3
+
+  [[menu.main]]
+    name = "Posts"
+    pre = "<span data-feather='book'></span>"
+    url = "/posts/"
+    weight = 4
