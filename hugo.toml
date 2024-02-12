@@ -12,10 +12,10 @@ enableRobotsTXT = true
   avatarSize = "size-m"
 
   socialIcons = [
-    {name = "twitter", url = "https://example.com"},
-    {name = "linkedin", url = "https://example.com"},
-    {name = "github", url = "https://example.com"},
-    {name = "email", url = "mailto:example@example.com"}
+    {name = "twitter", url = "https://twitter.com/imarce7j"},
+    {name = "linkedin", url = "https://www.linkedin.com/pub/marcelino-yax/b6/a4a/833"},
+    {name = "github", url = "https://github.com/marceand"},
+    {name = "email", url = "mailto:marce7j@gmail.com"}
   ]
 
 [menu]
