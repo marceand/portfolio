@@ -1,0 +1,8 @@
+/resources/
+/public/
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.hugo_build.lock
