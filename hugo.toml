@@ -13,7 +13,7 @@ enableRobotsTXT = true
 
   socialIcons = [
     {name = "twitter", url = "https://twitter.com/imarce7j"},
-    {name = "linkedin", url = "https://www.linkedin.com/pub/marcelino-yax/b6/a4a/833"},
+    {name = "linkedin", url = "https://www.linkedin.com/pub/marcelino-yax/b6/a4a/833gu"},
     {name = "github", url = "https://github.com/marceand"},
     {name = "email", url = "mailto:marce7j@gmail.com"}
   ]
