@@ -1,4 +1,4 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://marcelino-portfolio.netlify.app/'
 languageCode = 'en-us'
 title = 'Marcelino Yax'
 theme = "gokarna"
