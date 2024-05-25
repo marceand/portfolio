@@ -11,8 +11,14 @@ Stormy is a weather app from my online Android course at Treehouse. For this app
 
 Custom ImageViews, Intents and Multiple Activities, Model-View-Controller(MVC), Networking, Third-Party API, JSON, Asynchronous Processing, Error Handling, ListViews, Parcelable Data, RecyclerViews, ViewPager, Custom Adapter and Plotting Data
 
-### Check Demo Video
+### [Github](https://github.com/marceand/Stormy)
 
-- Encuesta
-- Trivia
-- Game
+### Design & Implementation
+
+|         Current Forecast          |          7-Day Forecast           |
+| :-------------------------------: | :-------------------------------: |
+| ![Login](/images/stormy/main.png) | ![Main](/images/stormy/dayly.png) |
+
+|                Temperature                 |                  Humidity                   |
+| :----------------------------------------: | :-----------------------------------------: |
+| ![Profile](/images/stormy/temperature.png) | ![Main](/images/stormy/humidity.png "main") |

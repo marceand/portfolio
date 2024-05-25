@@ -11,8 +11,10 @@ Vocabulary helps users to save and share vocabulary words.
 
 Kotlin, ViewModel, Coroutine, Room Persistence, LiveData
 
-### Check Demo Video
+### [Github](https://github.com/marceand/mvocabulary)
 
-- Encuesta
-- Trivia
-- Game
+### Design & Implementation
+
+|           Vocabulary List            |          Vocabulary Editing          |
+| :----------------------------------: | :----------------------------------: |
+| ![List](/images/vocabulary/list.png) | ![Edit](/images/vocabulary/edit.png) |

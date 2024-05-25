@@ -11,8 +11,14 @@ ExpenseTracker helps user to monitor budget and expenses.
 
 Kotlin, ViewModel, Coroutine, Room Persistence, LiveData, MediatorLiveData
 
-### Check Demo Video
+### [Github](https://github.com/marceand/expensetracker)
 
-- Encuesta
-- Trivia
-- Game
+### Design & Implementation
+
+|               Main                |               Statement                |
+| :-------------------------------: | :------------------------------------: |
+| ![List](/images/expense/main.png) | ![Edit](/images/expense/statement.png) |
+
+|               Budget                |           Adding Expense            |
+| :---------------------------------: | :---------------------------------: |
+| ![List](/images/expense/budget.png) | ![Edit](/images/expense/adding.png) |

@@ -13,6 +13,6 @@ Timer, Fragment, Custom Keyboard, Testing(mockito, robolectric), and more.
 
 ### Check Demo Video
 
-- Encuesta
-- Trivia
-- Game
+- [Encuesta](https://www.youtube.com/watch?v=LdjKypAoEeo)
+- [Trivia](https://www.youtube.com/watch?v=I9m0YiX8MlE)
+- [Game](https://www.youtube.com/watch?v=qhKe9cnbd0w)

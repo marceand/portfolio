@@ -11,8 +11,12 @@ One Way is a simple game app that lets the users memorize and redraw a given pat
 
 Custom View, Fragment Lifecycle, onTouchEvent, Frame-by-Frame Animation, Threads, SurfaceView, SurfaceHolder, Paint and Canvas, Menus
 
-### Check Demo Video
+### Design & Implementation
 
-- Encuesta
-- Trivia
-- Game
+|                  Instruction                   |                 Animation                  |
+| :--------------------------------------------: | :----------------------------------------: |
+| ![Instruction](/images/oneway/instruction.png) | ![Animation](/images/oneway/animation.png) |
+
+|                 Score                  |                 Menu                 |
+| :------------------------------------: | :----------------------------------: |
+| ![Playing](/images/oneway/playing.png) | ![Option](/images/oneway/option.png) |
