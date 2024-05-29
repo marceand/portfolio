@@ -15,6 +15,6 @@ Compose UI, Column, Row, MD3 Components (Slider, Text, IconButton, Image), Previ
 
 ### Design & Implementation
 
-|              [Player Control]()               |
-| :-------------------------------------------: |
-| ![Player](/images/compose/player_control.png) |
+| [Player Control](https://github.com/marceand/compose-practicing) |
+| :--------------------------------------------------------------: |
+|          ![Player](/images/compose/player_control.png)           |
