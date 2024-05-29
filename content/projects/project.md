@@ -5,8 +5,8 @@ type: page
 
 ### Custome UI - Material Design (MD)
 
-| [UI MD](/projects/ui-material-design/) |     | [UI Compose]() |
-| :------------------------------------: | :-: | -------------- |
+| [MD UI](/projects/ui-material-design/) |     | [Compose UI](/projects/compose/) |
+| :------------------------------------: | :-: | -------------------------------- |
 
 ### Client Apps I've worked with
 
