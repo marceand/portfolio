@@ -1,0 +1,465 @@
+---
+title: "Quadcopter: Motor Mixer Algorithm"
+date: 2025-01-15T00:25:52-05:00
+type: "post"
+showTableOfContents: true
+---
+
+## Introduction
+
+With a personal goal of developing a deep understanding of quadcopter dynamics, I built my own quadcopter based on the open-source Carbon Aeronautics drone. This required purchasing parts online, making modifications, and assembling the whole quadcopter from the ground up until flight testing. Even though it may sound like a straightforward path from assembly to testing, I spent months stuck trying to make it fly due to both hardware and software issues. Little by little, the fun turned into frustration.
+
+One of the main issues I faced was that my quadcopter flipped on every takeoff. After extensive troubleshooting, I became convinced that the problem was the motor mixer algorithm, without realizing there were other possible causes for this behavior. Weeks later, I discovered that the real issue was the electronic speed controller (ESC) miscalibration. However, by then I had already spent a lot of time learning about motor mixer algorithms, to the point that I derived one for my quadcopter to confirm whether it was actually correct.
+
+## What you will learn
+
+The purpose of this blog is to share the derivation of the motor mixer from the quadcopter’s geometric layout, assuming you already know some basic physics and linear algebra. This gives us a starting idea of how popular flight controllers handle motor mixers and it helps us understand through equations how most of the drone’s physical parameters are absorbed into the PID gains, so that in practice we mostly care about retuning the drone experimentally.
+
+## Motor Mixer Algorithm
+
+As shown in Fig. 1, the motor mixer algorithm combines the outputs of the controller to generate individual motor commands. In general, the controller produces the desired thrust and the desired roll, pitch, and yaw torques. The mixer then converts these values into individual motor commands according to the quadcopter geometry.
+
+Depending on the implementation, the mixer outputs may represent either desired motor thrust commands or normalized motor commands. For this quadcopter, normalized motor commands are used, so the mixer outputs are scaled directly to PWM signals and sent to the ESCs, as demonstrated in Fig. 2.
+
+Therefore, the purpose of the mixer algorithm is to determine the contribution of each motor required to achieve the desired motion of the quadcopter.
+
+## Find Motor Mixer Algorithm iteratively
+
+The manual of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as shown below. To find the correct combination, we have to use the quadcopter configuration and go through every movement case until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs are provided directly by the controller.
+
+$$
+\begin{aligned}
+\text{output motor 1} &= \text{throttle input} - \text{roll input} - \text{pitch input} - \text{yaw input} \\
+\text{output motor 2} &= \text{throttle input} - \text{roll input} + \text{pitch input} + \text{yaw input} \\
+\text{output motor 3} &= \text{throttle input} + \text{roll input} + \text{pitch input} - \text{yaw input} \\
+\text{output motor 4} &= \text{throttle input} + \text{roll input} - \text{pitch input} + \text{yaw input}
+\end{aligned}
+$$
+
+Rewriting the mixer in a clean matrix form, we have
+
+$$
+\begin{bmatrix} \text{output motor 1} \\ \text{output motor 2} \\ \text{output motor 3} \\ \text{output motor 4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \text{throttle input} \\ \text{roll input} \\ \text{pitch input} \\ \text{yaw input} \end{bmatrix} \tag{1}
+$$
+
+For now, let's assume the motor mixer is just the summation of each input without considering the sign of each input. We will add the sign of each input as we consider each case scenario.
+
+$$
+\begin{aligned}
+\text{output motor 1} &= \text{throttle input} + \text{roll input} + \text{pitch input} + \text{yaw input} \\
+\text{output motor 2} &= \text{throttle input} + \text{roll input} + \text{pitch input} + \text{yaw input} \\
+\text{output motor 3} &= \text{throttle input} + \text{roll input} + \text{pitch input} + \text{yaw input} \\
+\text{output motor 4} &= \text{throttle input} + \text{roll input} + \text{pitch input} + \text{yaw input}
+\end{aligned}
+$$
+
+Let's take the rolling case scenario shown in Fig. 3, where we want the quadcopter to roll to the right. First, we assume that an input percentage maps directly to a motor power percentage. Suppose the quadcopter is hovering with a throttle input of 50%, which causes each motor to operate at 50% of its power. We then apply a roll input of 20%, while assuming there is no pitch input (0%) and no yaw input (0%) interfering with the roll movement. Therefore, the above placeholder mixer consists only of the throttle and roll inputs.
+
+$$
+\begin{aligned}
+\text{output motor 1} &= \text{throttle input} + \text{roll input} \\
+\text{output motor 2} &= \text{throttle input} + \text{roll input} \\
+\text{output motor 3} &= \text{throttle input} + \text{roll input} \\
+\text{output motor 4} &= \text{throttle input} + \text{roll input}
+\end{aligned}
+$$
+
+From Fig. 3, we see that to roll to the right, we have to decrease the power of motors 1 and 2 by 20%. At the same time, we have to increase the power of motors 3 and 4 by 20%. This means the roll input for motors 1 and 2 must have a negative sign, while the roll input for motors 3 and 4 must have a positive sign. We end up with the following mixer for rolling to the right. If we plug in the values, we can clearly see that the two left motors provide less power, while the two right motors provide more power to achieve the rightward movement.
+
+$$
+\begin{aligned}
+\text{output motor 1} &= \text{throttle input} - \text{roll input} = 50\% - (20\%) = 30\% \\
+\text{output motor 2} &= \text{throttle input} - \text{roll input} = 50\% - (20\%) = 30\% \\
+\text{output motor 3} &= \text{throttle input} + \text{roll input} = 50\% + (20\%) = 70\% \\
+\text{output motor 4} &= \text{throttle input} + \text{roll input} = 50\% + (20\%) = 70\%
+\end{aligned}
+$$
+
+The next question is whether this mixer also works for rolling to the left, where motors 1 and 2 need higher power and motors 3 and 4 need lower power, as shown in Fig. 4. Clearly, this mixer still produces a roll to the right if we provide a positive roll input. Therefore, we must provide a negative roll input so that the signs in the mixer are effectively reversed, resulting in a roll to the left. With this in mind, the roll mixer allows the quadcopter to roll both to the right and to the left, but the roll input must carry the correct sign to determine the direction of the movement.
+
+$$
+\begin{aligned}
+\text{output motor 1} &= \text{throttle input} - \text{roll input} = 50\% - (-20\%) = 70\% \\
+\text{output motor 2} &= \text{throttle input} - \text{roll input} = 50\% - (-20\%) = 70\% \\
+\text{output motor 3} &= \text{throttle input} + \text{roll input} = 50\% + (-20\%) = -30\% \\
+\text{output motor 4} &= \text{throttle input} + \text{roll input} = 50\% + (-20\%) = -30\%
+\end{aligned}
+$$
+
+To obtain the mixers for pitch and yaw movements, we follow the same iterative approach. This is how we arrive at the final motor mixer algorithm in (1) for this quadcopter.
+
+## Find Motor Mixer Algorithm mathematically
+
+From studying the quadcopter rigid-body dynamics, we learned that the translational dynamics of the vehicle depend on the total thrust, $T_{total}$ and the rotational dynamics, on the other hand, depend on the three body torques, $\tau_{roll}$, $\tau_{pitch}$, and $\tau_{yaw}$.
+
+By collecting the equations that describe these dynamics, we can form a matrix relationship between the four motor thrusts and the total thrust and three body torques. This relationship is represented by the mixer matrix $(M)$:
+
+$$
+\begin{bmatrix} T_{total} \\ \tau_{roll} \\ \tau_{pitch} \\ \tau_{yaw} \end{bmatrix} = M \begin{bmatrix} T_1 \\ T_2 \\ T_3 \\ T_4 \end{bmatrix}
+$$
+
+By inverting the mixer matrix, we can compute the individual motor thrusts required to produce the desired total thrust and body torques.
+
+$$
+\begin{bmatrix} T_1 \\ T_2 \\ T_3 \\ T_4 \end{bmatrix} =  M^{-1} \begin{bmatrix} T_{total} \\ \tau_{roll} \\ \tau_{pitch} \\ \tau_{yaw} \end{bmatrix}
+$$
+
+I personally prefer this motor mixer derivation approach because it allows us to verify that the resulting mixer is physically consistent and can be extended to other multirotor configurations.
+
+### Total Thrust
+
+It is defined that the thrust force generated by a propeller is directly proportional to the square of the rotor angular velocity, $\omega$, with thrust coefficient $k_T$:
+
+$$
+\begin{aligned}
+T_i &= k_T \omega_i^2 \qquad i=1,2,3,4\tag{1}
+\end{aligned}
+$$
+
+Therefore, the total vertical thrust is the sum of the thrust generated by each rotor:
+
+$$
+    T_{total} = T_1+T_2+T_3+T_4\tag{2}
+$$
+
+### Aerodynamic Drag Torque
+
+It is also known that a propeller generates an aerodynamic drag torque that is proportional to the square of the rotor angular velocity, $\omega$, with moment coefficient $k_Q$. The sign of each drag torque depends on the propeller spin direction and the body-frame coordinate convention.
+
+$$
+    Q_{i} = \pm k_{Q}\omega_{i}^{2}\qquad i=1,2,3,4\tag{3}
+$$
+
+To obtain the drag torque with its proper sign for this quadcopter, we use the marked axes of the IMU board as the body-frame coordinate convention, where $+x$ is forward and $+y$ is left, as shown in Fig. 4. By taking the cross product of these axes, the $+z$ axis points upward:
+
+$$
++\vec{z} = +\vec{x} \times +\vec{y}
+$$
+
+Applying the right-hand rule to the $+z$ axis, a counterclockwise (CCW) propeller has a positive angular velocity, $+ω$, about $+z$, resulting in a positive aerodynamic drag torque along $+z$. Likewise, a clockwise (CW) propeller produces a negative aerodynamic drag torque.
+
+Table 1 summarizes the aerodynamic drag torque with its correct sign for each rotor of this quadcopter.
+
+{{<customtable>}}
+_Table 1: Aerodynamic Drag torque from each rotor_
+| Rotor | Prop Direction | Drag Torque |
+| :------ | :-------: | :---------: |
+| motor 1 | CCW | +$Q_1$ |
+| motor 2 | CW | -$Q_2$ |
+| motor 3 | CCW | +$Q_3$ |
+| motor 4 | CW | -$Q_4$ |
+{{</customtable>}}
+
+### Roll and Pitch Torque
+
+The roll and pitch torques result from differences in the thrust produced by opposing rotors acting at a distance from the center of the quadcopter. We derive these torques from the standard definition of torque, which is the cross product of the lever-arm vector and the force vector.
+
+$$
+\vec{\tau} = \vec{r} \times \vec{F}
+$$
+
+Hence, the net torque acting on the drone body is the sum of all individual torques.
+
+$$
+\vec{\tau}_{net} = \sum \vec{r_i} \times \vec{F_i}
+$$
+
+Once we perform the cross product and separate the x-axis and y-axis components, the roll torque and pitch torque are defined as
+
+$$\tau_\text{roll} = \sum y_iT_i$$
+
+$$\tau_\text{pitch}  = \sum(-x_iT_i)$$
+
+Fig. 5 illustrates the correct coordinate position of each motor of this quadcopter, where the axes of the IMU board are used as the body-frame coordinate convention. In this convention, (+x) is forward, (+y) is left, and (+z) is upward.
+
+By plugging in the corresponding y-coordinates of each motor position, we obtain the final roll torque.
+
+$$
+\begin{aligned}
+\tau_\text{roll} = \sum y_iT_i = y_1T_1+y_2T_2+y_3T_3+y_4T_4 \\
+\tau_\text{roll} = (-L_y)T_1+(-L_y)T_2+(L_y)T_3+(L_y)T_4 \\
+\tau_\text{roll} = L_y(-T_1-T_2+T_3+T_4)
+\end{aligned}
+$$
+
+Similarly, by plugging in the corresponding x-coordinates of each motor position, we obtain the final pitch torque.
+
+$$
+\begin{aligned}
+\tau_\text{pitch}  = \sum(-x_iT_i) = -(x_1T_1+x_2T_2+x_3T_3+x_4T_4) \\
+\tau_\text{pitch}  = -[(L_x)T_1+(-L_x)T_2+(-L_x)T_3+(L_x)T_4] \\
+\tau_\text{pitch}  =  L_x(-T_1+T_2+T_3-T_4)
+\end{aligned}
+$$
+
+### Yaw Torque
+
+According to Newton's third law, the aerodynamic drag torque, $Q_i$, generated by the propellers causes an equal-and-opposite reaction torque on the drone body. This reaction torque has the same magnitude as $Q_i$ but the opposite sign. Hence, the yaw torque is the sum of the reaction torques from all rotors about the body-frame z-axis.
+
+$$
+\tau_{yaw} = \pm Q_1 \pm Q_2 \pm Q_3 \pm Q_4
+$$
+
+For this drone, Table 1 already lists the aerodynamic drag torque, (Q_i), with its proper sign. Therefore, the yaw torque is the sum of these drag torques with opposite signs:
+
+$$
+\tau_{yaw} = - Q_1 + Q_2-Q_3 + Q_4
+$$
+
+By introducing the rotor drag-to-thrust coefficient ratio $\gamma = \frac{k_Q}{k_T}$, it is convenient to express $Q_i$ in terms of the thrust force $T_i$.
+
+$$
+Q_i = \frac{k_Q}{k_T} T_i = \gamma T_i
+$$
+
+Substituting into (2), we obtain the final yaw torque in terms of $T_i$ and $\gamma$.
+
+$$
+\tau_{yaw} = -\gamma T_1+\gamma T_2- \gamma T_3+\gamma  T_4
+$$
+
+$$
+\tau_{yaw} = \gamma (-T_1+T_2-T_3+T_4)\tag{3}
+$$
+
+### Defining Motor Mixer Matrix
+
+Grouping the total thrust, roll torque, pitch torque, and yaw torque in the following order, we have:
+
+$$
+\begin{aligned}
+T_\text{total} = T_1+T_2+T_3+T_4 \\
+\tau_\text{roll} = L_y(-T_1-T_2+T_3+T_4) \\
+\tau_\text{pitch}  =  L_x(-T_1+T_2+T_3-T_4) \\
+\tau_\text{yaw} = \gamma (T_1-T_2+T_3-T_4)
+\end{aligned}
+$$
+
+Representing these equations in matrix form, we get
+
+$$
+\begin{bmatrix} T_{total} \\ \tau_{roll} \\ \tau_{pitch} \\ \tau_{yaw} \end{bmatrix} = \begin{bmatrix} 1 & 1 & 1 & 1 \\ -L_y & -L_y & L_y & L_y \\ -L_x & L_x & L_x & -L_x \\ -\gamma & \gamma & -\gamma & \gamma \end{bmatrix} \begin{bmatrix} T_1 \\ T_2 \\ T_3 \\ T_4 \end{bmatrix}
+$$
+
+To obtain the individual thrust generated by each rotor, we invert the matrix:
+
+$$
+\begin{bmatrix} T_{1} \\ T_{2} \\ T_{3} \\ T_{4} \end{bmatrix} = \begin{bmatrix} \frac14 & -\frac{1}{4L_y} & -\frac{1}{4L_x} & -\frac{1}{4\gamma} \\ \frac14 & -\frac{1}{4L_y} & \frac{1}{4L_x} & \frac{1}{4\gamma} \\ \frac14 & \frac{1}{4L_y} & \frac{1}{4L_x} & -\frac{1}{4\gamma} \\ \frac14 & \frac{1}{4L_y} & -\frac{1}{4L_x} & \frac{1}{4\gamma} \end{bmatrix} \begin{bmatrix} T_{total} \\ \tau_{roll} \\ \tau_{pitch} \\ \tau_{yaw} \end{bmatrix}
+$$
+
+We can go one step further by normalizing the matrix. This is done by factoring the physical constants into the input vector and leaving the matrix entries bounded between -1 and +1.
+
+$$
+\begin{bmatrix} T_{1} \\ T_{2} \\ T_{3} \\ T_{4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \frac14T_{total} \\ \frac14\frac{\tau_{roll}}{L_y} \\ \frac14\frac{\tau_{pitch}}{L_x} \\ \frac14\frac{\tau_{yaw}}{\gamma} \end{bmatrix}
+$$
+
+At this point, we can see that the motor mixer matrix derived from the dynamic derivation is identical to the motor mixer in (1) from the iterative approach. Therefore, the dynamic derivation verifies that the iterative motor mixer is correct.
+
+$$
+\begin{bmatrix} \text{output motor 1} \\ \text{output motor 2} \\ \text{output motor 3} \\ \text{output motor 4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \text{throttle input} \\ \text{roll input} \\ \text{pitch input} \\ \text{yaw input} \end{bmatrix}
+$$
+
+In the PID controller design, the controller outputs the total thrust, roll torque, pitch torque, and yaw torque. We represent these quantities by the inputs (u_1), (u_2), (u_3), and (u_4), respectively. Hence, the motor mixer matrix becomes
+
+$$
+\begin{bmatrix} T_{1} \\ T_{2} \\ T_{3} \\ T_{4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \frac14u_1 \\ \frac14\frac{u_2}{L_y} \\ \frac14\frac{u_3}{L_x} \\ \frac14\frac{u_4}{\gamma} \end{bmatrix} \tag{8}
+$$
+
+Finally, by defining $\tilde{u}_1$, $\tilde{u}_2$, $\tilde{u}_3$, $\tilde{u}_4$, we can rewrite the mixer matrix (8) as
+
+$$
+\begin{bmatrix} T_{1} \\ T_{2} \\ T_{3} \\ T_{4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \tilde{u}_1 \\ \tilde{u}_2 \\ \tilde{u}_3 \\ \tilde{u}_4 \end{bmatrix}
+$$
+
+where
+
+$$
+    \tilde{u}_1 = \frac{1}{4}u_1,
+    \qquad
+    \tilde{u}_2 = \frac{1}{4L_{y}}u_2,
+    \qquad
+    \tilde{u}_3 = \frac{1}{4L_{x}}u_3,
+    \qquad
+    \tilde{u}_4 = \frac{1}{4\gamma}u_4
+$$
+
+## Rescaling PID gains
+
+We observe that the final motor mixer implemented for this quadcopter does not depend on physical constants such as (1/4), (L_x), (L_y), and (\gamma). This is possible because these constants can be absorbed into the PID gains, allowing the tuning process to account for them automatically. Once this is done, the PID outputs become command inputs rather than physical quantities. This is why we use command inputs instead of thrust and torque in the final motor mixer.
+
+To see how this PID gain rescaling works, let's consider the roll torque input (u_2), defined as
+
+$$
+u_2 =\tau_{roll} = K_P e_{roll} + K_I \int e_{roll}\,dt + K_D \frac{de_{roll}}{dt}
+$$
+
+We know $\tilde{u}_2$ and by substituting $u_2$, we get
+
+$$
+\tilde{u}_2 = \frac{1}{4L_{y}}u_2 = \frac{1}{4L_{y}}
+\left(
+K_{P}e_{roll}
++
+K_{I}\int e_{roll}\,dt
++
+K_{D}\frac{d e_{roll}}{dt}
+\right)
+$$
+
+Next, we define the following PID gains that absorb the physical constant $\frac{1}{4L_y}$:
+
+$$
+    \tilde{K}_{P} = \frac{1}{4L_{y}}K_{P},
+    \qquad
+    \tilde{K}_{I} = \frac{1}{4L_{y}}K_{I},
+    \qquad
+    \tilde{K}_{D} = \frac{1}{4L_{y}}K_{D}
+$$
+
+Then $\tilde{u}_2$ remains a PID controller, but with rescaled gains.
+
+$$
+    \tilde{u}_2
+    =
+    \tilde{K}_{P}e_{roll}
+    +
+    \tilde{K}_{I}\int e_{roll}\,dt
+    +
+    \tilde{K}_{D}\frac{d e_{roll}}{dt}
+$$
+
+Note that the same rescaling can be applied to the other inputs.
+
+From this example, we see that we do not need to explicitly include the physical constants in the motor mixer because they are absorbed into the PID gains during the tuning process. As a result, the PID outputs become command inputs rather than physical quantities. The main drawback of this approach is that the PID gains must be retuned whenever the propellers, motors, or drone size change.
+
+## Code Implementation
+
+For my version of the flight controller, I implemented the motor mixer directly in its matrix form. I find this approach much easier to understand because it closely matches the mathematical derivation and helps me become more familiar with quadcopter terminology. The following C++ snippet completely summarizes the mixer, and it still amazes me that this implementation actually works and is able to fly a real quadcopter.
+
+```cpp
+    // Motors.h
+    #define NUM_MOTORS 4
+    float _command_inputs[4] = {0.0f};
+    float _mixed_motor_outputs[NUM_MOTORS] = {0.0f};
+    float _mixer[NUM_MOTORS][NUM_MOTORS] = {
+        {1, -1, -1, -1}, // Motor 1
+        {1, -1, 1, 1},   // Motor 2
+        {1, 1, 1, -1},   // Motor 3
+        {1, 1, -1, 1},   // Motor 4
+    };
+```
+
+```cpp
+    // Motors.cpp
+    void Motors::set_command_inputs(float throttle_command, float roll_command, float pitch_command, float yaw_command)
+    {
+        _command_inputs[Input::THROTTLE] = throttle_command;
+        _command_inputs[Input::ROLL] = roll_command;
+        _command_inputs[Input::PITCH] = pitch_command;
+        _command_inputs[Input::YAW] = yaw_command;
+
+        if (_command_inputs[Input::THROTTLE] > SAFE_MAX_THROTTLE)
+        {
+            _command_inputs[Input::THROTTLE] = SAFE_MAX_THROTTLE;
+        }
+    }
+
+    void Motors::compute_mixer_outputs()
+    {
+        for (int i = 0; i < NUM_MOTORS; i++)
+        {
+            float sum = 0.0f;
+            for (int j = 0; j < NUM_MOTORS; j++)
+            {
+                sum += _mixer[i][j] * _command_inputs[j];
+            }
+            _mixed_motor_outputs[i] = sum;
+        }
+    }
+```
+
+For this drone the commands from the mixer are the pwm signals sent directly to the ESCs limited between 1000us ad 1800us scaled according to the hardware pwm generator.
+
+The meticulus manual of Carbon Quadcopter is designed to help beginners to quickly build a quadcopter but also there is open section where we can commit to find out why certain functionality works as is.
+
+## Note
+
+using the table 1 that summarizes the sign of the yaw torque from each rotor,
+therefore the total yaw torque is the summation of the drag torque produced by each rotor with its respective sign.
+
+$$
+\tau_{yaw} = M_1-M_2+M_3-M_4\tag{3}
+$$
+
+Using the body-frame convention, +x forward and +y left, the cross product gives +z upward:
+
++x×+y=+z
+
+By the Right-hand rule, positive yaw is CCW when viewed from above. A CCW prop therefore has positive angular velocity about +z (+ω), and the prop aerodynamic drag torque is along +z. The drone body experiences the equal-and-opposite reaction torque, so the yaw torque on the body is negative (−z).
+
+We already have total thrust, yawing torque, but missing rolling and pitching torque. The rolling and pitching toque are obtained from the torque formula which is the cross product of vector lever arm and the vector force:
+
+$$
+\vec{\tau} = \vec{r} \times \vec{F}
+$$
+
+The the IMU is rigidly attached to drone with its axis marked on its board and we take it as a reference for the body frame, in this way we know where each axis of body frame are oriented. For this quadcopter, the +x is pointing to the front whereas the +y is pointed to the left. With this axis in place, we can find the coordinates of each motors in the x-axis and y-axis as shown in figure 3. By plugginng in the corresping x-component and y component of each motor position into (5) and (6), the rolling toque and pitching torque are (6) and (7). Important to note that the coordinate of the motors depend on the quadcopter configuration, for example for the X-configuration each arm is phsically at a digonal of 45 degree.
+
+Looking at the final motor mixer used for this drone, we
+
+Thus, to stabilize the quadcopter, we create a PID for each control input.
+
+When we design a real PID controller for the quadcopter, we relied on the controller to compute each input instead of calculating the throttle and torque using the physical values like mass, length, and coefficient. Therefore, we replace the input vector of the motor mixer with the controller innput u1, u2, u3 and u4. It is important to note that we deriver all the equations above using physical constants because we need them in simulation for further analysis.
+
+$$
+\begin{bmatrix} T_{1} \\ T_{2} \\ T_{3} \\ T_{4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} u_{1} \\ u_{2} \\ u_{3} \\ u_{4} \end{bmatrix}
+$$
+
+To stabilize the quadcopter, we create a PID for each control input. With this approach, the PID only try to minimize the error to achieve a desired value. That's why we don't have a flight controller that depend on the quadcopter physical constant parameters such as mass and arm length. More specifically, these constants are absorbed into the PID gains. This means we only have to tune each PID since all connstant parameters are already handled in the gains. The only downside is that we have to retune experimentally the PID if one of these constant parameters change, for example increasing the mass or arm length.  
+To actually discover that these constants are integrated into the gains of the PID, let build the PID for u2.
+Let u2 = (1/4)(1/Ly)(torque_roll) as derived above, then we can have a PID to provide the torque for the roll:
+
+$$
+\tau_{roll} = K_P e_{roll} + K_I \int e_{roll}\,dt + K_D \frac{de_{roll}}{dt}
+$$
+
+Hence,
+
+$$
+u_{2} = \frac{1}{4L_{y}}
+\left(
+K_{P}e_{roll}
++
+K_{I}\int e_{roll}\,dt
++
+K_{D}\frac{d e_{roll}}{dt}
+\right)
+$$
+
+We define the following PID gains that absorb the physical constant $\frac{1}{4L_y}$
+
+$$
+    \tilde{K}_{P} = \frac{1}{4L_{y}}K_{P},
+    \qquad
+    \tilde{K}_{I} = \frac{1}{4L_{y}}K_{I},
+    \qquad
+    \tilde{K}_{D} = \frac{1}{4L_{y}}K_{D}
+$$
+
+Then $u_{2}$ remains a PID controller, but with rescaled gains
+
+$$
+    u_{2}
+    =
+    \tilde{K}_{P}e_{roll}
+    +
+    \tilde{K}_{I}\int e_{roll}\,dt
+    +
+    \tilde{K}_{D}\frac{d e_{roll}}{dt}
+$$
+
+Therefore all we have to do just tune the gains of the PID of u2 without explicitly considering the physical constants since the gains already handle them.
+
+Going back to the motor mixer algorithm, but what each input is actually representing? Lets take for example, u2=scale\*torque, we clearly see that u2 does not represent torque but a scaled thrust difference needed to produce roll, thus, we can say this controller inputs represents input commands that tell the actuators to achieve a desired output. With this in mind, it is also convinient to call them throtlle, roll, pitch and yaw as input command.
+
+For my version of flight controller, I implemented this motor mixer algorithm as represent by its matrix form, this is much better for me to understand and be familiar with the quadcopter termenology, the following c++ snipet below completly summarize this mixer and it is amazing that it actually works and manage to fly this real quadcopter.
