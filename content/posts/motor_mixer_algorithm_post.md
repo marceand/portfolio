@@ -1,6 +1,6 @@
 ---
 title: "Quadcopter: Motor Mixer Algorithm"
-date: 2025-01-15T00:25:52-05:00
+date: 2026-06-22T17:03:00-04:00
 type: "post"
 showTableOfContents: true
 ---
@@ -17,20 +17,20 @@ One of the main issues I faced was that my quadcopter flipped on every takeoff. 
 
 ## What you will learn
 
-The purpose of this blog is to share the derivation of the motor mixer from the quadcopter dynamic, assuming you already know some basic physics and linear algebra. This gives us a starting idea of how popular flight controllers handle motor mixers and it helps us understand through equations how most of the drone’s physical parameters are absorbed into the PID gains, so that in practice we mostly care about retuning the drone experimentally.
+The purpose of this blog is to share the derivation of the motor mixer from the quadcopter dynamic, assuming you already know some basic physics and linear algebra. This gives us a starting idea of how popular flight controllers handle motor mixers and it helps us understand that the PID controller implicitly compensates for the drone’s physical parameters, so that in practice we mainly focus on tuning the drone experimentally.
 
 ## A Note to the Reader
 
-The content presented here is intended primarily for hobbyist purposes and is based on my personal notes. My goal is to simplify complex concepts as much as possible for my quadcopter project, so some details may be oversimplified or contain mistakes. If you are looking for a more theoretical approach to understanding quadcopters, I encourage you to check out the publications and projects shared by the UAV research community.
+The content presented here is intended primarily for hobbyist purposes and is based on my personal notes. My goal is to simplify complex concepts as much as possible for my quadcopter project, so some details may be oversimplified or contain mistakes.
 
 ## Quadcopter
 
-The open-source quadcopter is a low-cost micro H-configuration drone powered by a 2S LiPo battery and designed for teaching mechanical, electronic, and flight controller software concepts. Its greatest advantage is its [well-documented manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) and [YouTube](https://www.youtube.com/@carbonaeronautics) videos, which cover everything from assembly and flight testing to the quadcopter dynamics simulation. I highly recommend it if you are interested in building your own drone from scratch.
+The open-source quadcopter is a low-cost micro H-configuration drone powered by a 2S LiPo battery and designed for teaching mechanical, electronic, and flight controller software concepts. Its greatest advantage is its well-documented [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) and [YouTube](https://www.youtube.com/@carbonaeronautics) videos, which cover everything from assembly and flight testing to the quadcopter dynamics simulation. I highly recommend it if you are interested in building your own drone from scratch.
 
 This platform was especially helpful for my learning goals because both the hardware and software are fully hackable and adaptable. This allowed me to modify the design and develop my own flight controller version. Some of the changes I made include a custom carbon-fiber lower frame, an sBUS receiver, different motors and ESCs, flight logging through an SD card, and several software features such as a task scheduler, arming-disarming functionality, and buzzer notifications. The source code is available on [GitHub](https://github.com/marceand/drone-flight-controller).
 
 The video below shows the quadcopter flying in acro mode.
-{{< youtube 7j2WhINkeBU >}}
+{{< youtube qaAFQXmBuWc >}}
 
 ## Motor Mixer Algorithm
 
@@ -51,7 +51,7 @@ Therefore, the purpose of the mixer algorithm is to determine the contribution o
 
 ## Find Motor Mixer Algorithm iteratively
 
-The [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as shown below. To find the correct combination, we have to use the quadcopter configuration and go through every movement case until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs are provided directly by the controller.
+The [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as shown in (1). To find the correct combination, we have to use the quadcopter configuration and go through every movement case until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs are provided directly by the controller.
 
 {{< small-matrix-block >}}
 
@@ -90,7 +90,7 @@ $$
 
 {{< /small-matrix-block >}}
 
-Let's take the rolling case scenario, where we want the quadcopter to roll to the right. First, we assume that an input percentage maps directly to a motor power percentage. Suppose the quadcopter is hovering with a throttle input of 50%, which causes each motor to operate at 50% of its power. We then apply a roll input of 20%, while assuming there is no pitch input (0%) and no yaw input (0%) interfering with the roll movement. Therefore, the above placeholder mixer consists only of the throttle and roll inputs.
+Let's take the rolling case scenario, where we want the quadcopter to roll to the right, see Fig. 3. First, we assume that an input percentage maps directly to a motor power percentage. Suppose the quadcopter is hovering with a throttle input of 50%, which causes each motor to operate at 50% of its power. We then apply a roll input of 20%, while assuming there is no pitch input (0%) and no yaw input (0%) interfering with the roll movement. Therefore, the above placeholder mixer consists only of the throttle and roll inputs.
 
 {{< small-matrix-block >}}
 
@@ -105,7 +105,7 @@ $$
 
 {{< /small-matrix-block >}}
 
-From Fig. 3, we see that to roll to the right, we have to decrease the power of motors 1 and 2 by 20%. At the same time, we have to increase the power of motors 3 and 4 by 20%. This means the roll input for motors 1 and 2 must have a negative sign, while the roll input for motors 3 and 4 must have a positive sign. We end up with the following mixer for rolling to the right. If we plug in the roll input, we can clearly see that the two left motors provide less power, while the two right motors provide more power to achieve the rightward movement.
+From Fig. 3, we see that to roll to the right, we have to decrease the power of motors 1 and 2 by 20%. At the same time, we have to increase the power of motors 3 and 4 by 20%. This means the roll input for motors 1 and 2 must have a negative sign, while the roll input for motors 3 and 4 must have a positive sign. We end up with the following mixer for rolling to the right. If we plug in the value of the roll input, we can clearly see that the two right motors provide less power, while the two left motors provide more power to achieve the rightward movement.
 
 {{< small-matrix-block >}}
 
@@ -125,7 +125,7 @@ alt="Rolling right"
 caption="Fig. 3. (a) The quadcopter rolling to the right. (b) A 2D representation of the roll motion. $^{1}$"
 class="center-caption" >}}
 
-The next question is whether this mixer also works for rolling to the left, where motors 1 and 2 need higher power and motors 3 and 4 need lower power, as shown in Fig. 4. Clearly, this mixer still produces a roll to the right if we provide a positive roll input. Therefore, we must provide a negative roll input so that the signs in the mixer are effectively reversed, resulting in a roll to the left. If we plug in the negative roll input, we can clearly see that the drone rolls to the left. With this in mind, the sign of the roll input determines the direction of the roll motion.[^1]
+The next question is whether this mixer also works for rolling to the left, where motors 1 and 2 need higher power and motors 3 and 4 need lower power, as shown in Fig. 4. Clearly, this mixer still produces a roll to the right if we provide a positive roll input. Therefore, we must provide a negative roll input so that the signs in the mixer are effectively reversed, resulting in a roll to the left. If we plug in the negative value of the roll input, we can clearly see that the drone rolls to the left. With this in mind, the sign of the roll input determines the direction of the roll motion.
 
 {{< small-matrix-block >}}
 
@@ -201,7 +201,7 @@ alt="Motor coordinates"
 caption="Fig. 6. Proper sign of the aerodynamic drag torque using the right-hand rule."
 class="center-caption" >}}
 
-To obtain the drag torque with its proper sign for this quadcopter, we use the marked axes of the IMU board as the body-frame coordinate convention, where $+x$ is forward and $+y$ is left, as shown in Fig. 4. By taking the cross product of these axes, the $+z$ axis points upward:
+To obtain the drag torque with its proper sign for this quadcopter, we use the marked axes of the IMU board as the body-frame coordinate convention, where $+x$ is forward and $+y$ is left, as shown in Fig. 6. By taking the cross product of these axes, the $+z$ axis points upward:
 
 $$
 +\vec{z} = +\vec{x} \times +\vec{y} \tag{12}
@@ -229,7 +229,7 @@ $$\tau_\text{roll} = \sum y_iT_i  \tag{15}$$
 
 $$\tau_\text{pitch}  = \sum(-x_iT_i) \tag{16}$$
 
-Fig. 5 illustrates the correct coordinate position of each motor of this quadcopter, where the axes of the IMU board are used as the body-frame coordinate convention. In this convention, $+x$ is forward, $+y$ is left, and $+z$ is upward.
+Fig. 7 illustrates the correct coordinate position of each motor of this quadcopter, where the axes of the IMU board are used as the body-frame coordinate convention. In this convention, $+x$ is forward, $+y$ is left, and $+z$ is upward.
 
 {{< figure src="/images/motor-mixer-blog/motor-coordinates.svg"
 alt="Motor position"
@@ -288,7 +288,7 @@ $$
 By introducing the rotor drag-to-thrust coefficient ratio $\gamma = \frac{k_Q}{k_T}$, it is convenient to express $Q_i$ in terms of the thrust force $T_i$.
 
 $$
-Q_i = \frac{k_Q}{k_T} T_i = \gamma T_i \tag{22}
+Q_i = \frac{k_Q}{k_T} T_i = \gamma T_i \qquad i=1,2,3,4\tag{22}
 $$
 
 Substituting into (21), we obtain the final yaw torque in terms of $T_i$ and $\gamma$.
@@ -307,7 +307,7 @@ $$
 T_\text{total} = T_1+T_2+T_3+T_4 \\
 \tau_\text{roll} = L_y(-T_1-T_2+T_3+T_4) \\
 \tau_\text{pitch}  =  L_x(-T_1+T_2+T_3-T_4) \\
-\tau_\text{yaw} = \gamma (T_1-T_2+T_3-T_4) \tag{24}
+\tau_\text{yaw} = \gamma (-T_1+T_2-T_3+T_4) \tag{24}
 \end{aligned}
 $$
 
@@ -363,11 +363,11 @@ $$
 \begin{bmatrix} \text{output motor 1} \\ \text{output motor 2} \\ \text{output motor 3} \\ \text{output motor 4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \text{throttle input} \\ \text{roll input} \\ \text{pitch input} \\ \text{yaw input} \end{bmatrix}
 $$
 
-## Absorbing Physical Parameters
+## Physical Parameters and PID tuning
 
-We observe that the final motor mixer depends on the parameters $\frac{1}{4}$, $L_x$, $L_y$ and $\gamma$. In practice, we can measure these parameters experimentally, but for this hobby quadcopter there is no need to do so because they are absorbed into the PID controller gains during the tuning process. Once this is done, the PID outputs become command inputs rather than thrust and torque commands. Consequently, the final motor mixer operates on these command inputs and produces PWM motor commands.
+We observe that the final motor mixer equation (29) depends on the parameters $\frac{1}{4}$, $L_x$, $L_y$ and $\gamma$. In practice, we can measure these parameters experimentally, but for this hobby quadcopter there is no need to do so because the controller gains are tuned to compensate for their effect. Once this is done, the PID outputs become command inputs rather than thrust and torque commands. Consequently, the final motor mixer operates on these command inputs and produces PWM motor commands.
 
-To see how the PID gains absorb the physical parameters, let's consider the roll torque input $u_2$, defined as a continuous-time PID controller
+To see how the physical parameters are incorporated into the PID gains, let's consider the roll torque input $u_2$, defined as a continuous-time PID controller
 
 $$
 u_2 =\tau_{roll} = K_P e_{roll} + K_I \int e_{roll}\,dt + K_D \frac{de_{roll}}{dt} \tag{30}
@@ -387,7 +387,7 @@ K_{D}\frac{d e_{roll}}{dt}
 \tag{31}
 $$
 
-Next, we define the following PID gains that absorb the physical constant $\frac{1}{4L_y}$
+Next, we define the following scaled PID gains that incorporate the physical constant $\frac{1}{4L_y}$
 
 $$
     \tilde{K}_{P} = \frac{1}{4L_{y}}K_{P},
@@ -410,7 +410,7 @@ $$
     \tag{32}
 $$
 
-From this example, we see that the physical parameters can be omitted from the motor mixer because they are absorbed into the PID gains during the tuning process. As a result, the PID outputs become command inputs rather than physical quantities. The main drawback of this approach is that the PID gains must be retuned whenever the propellers, motors, or drone size change.
+From this example, we see that the physical parameters can be omitted from the motor mixer because their effect is implicitly captured by the PID gains. As a result, the PID outputs become command inputs rather than physical quantities. The main drawback of this approach is that the PID gains must be retuned whenever the propellers, motors, or drone size change.
 
 ## Code Implementation
 

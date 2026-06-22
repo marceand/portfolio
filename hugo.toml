@@ -49,17 +49,17 @@ enableRobotsTXT = true
     weight = 2
 
   [[menu.main]]
-    name = "Projects"
-    pre = "<span data-feather='code'></span>"
-    url = "/projects/project"
-    weight = 3
-
-  [[menu.main]]
     name = "Posts"
     pre = "<span data-feather='posts'></span>"
     url = "/posts/"
-    weight = 4
+    weight = 3
 
+  [[menu.main]]
+    name = "Projects"
+    pre = "<span data-feather='code'></span>"
+    url = "/projects/project"
+    weight = 4
+  
 [markup]
   [markup.tableOfContents]
     startLevel = 1
