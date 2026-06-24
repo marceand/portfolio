@@ -1,0 +1,10 @@
+/* custom attribute for blog*/
+
+.small-matrix-block .katex {
+    font-size: 1.1em;
+}
+
+figure figcaption {
+    text-align: center;
+    font-size: 0.9em;
+}
