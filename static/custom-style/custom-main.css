@@ -8,3 +8,22 @@ figure figcaption {
     text-align: center;
     font-size: 0.9em;
 }
+
+@media screen and (max-width: 768px) {
+    .katex-display {
+        font-size: 0.7em;
+     }
+     
+    .katex-display .tag {
+        position: static !important;
+        display: block;
+        text-align: right;
+        margin-top: 0.0em;
+    }
+
+    figure figcaption {
+        text-align: center;
+        font-size: 0.7em;
+    }
+}
+

@@ -51,7 +51,7 @@ pygmentsStyle = "dracula"
 
   [[menu.main]]
     name = "Posts"
-    pre = "<span data-feather='posts'></span>"
+    pre = "<span data-feather='book'></span>"
     url = "/posts/"
     weight = 3
 

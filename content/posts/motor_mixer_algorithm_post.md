@@ -53,7 +53,7 @@ Therefore, the purpose of the mixer algorithm is to determine the contribution o
 
 > _The terms input and command are used interchangeably (e.g., throttle input = throttle command)_
 
-The [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as shown in (1). To find the correct combination, we have to use the quadcopter configuration and analyze each motion scenario until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs, also referred to as commands, are provided directly by the controller, as indicated in Fig. 2.
+The [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as given by equation (1). To find the correct combination, we have to use the quadcopter configuration and analyze each motion scenario until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs, also referred to as commands, are provided directly by the controller, as indicated in Fig. 2.
 
 {{< small-matrix-block >}}
 
