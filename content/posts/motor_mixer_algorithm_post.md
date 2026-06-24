@@ -17,7 +17,7 @@ One of the main issues I faced was that my quadcopter flipped on every takeoff. 
 
 ## What you will learn
 
-The purpose of this blog is to share the derivation of the motor mixer from the quadcopter dynamic, assuming you already know some basic physics and linear algebra. This gives us a starting idea of how popular flight controllers handle motor mixers and it helps us understand that the PID controller implicitly compensates for the drone’s physical parameters, so that in practice we mainly focus on tuning the drone experimentally.
+The purpose of this post is to share the derivation of the motor mixer from the quadcopter dynamic, assuming you already know some basic physics and linear algebra. This gives us a starting idea of how popular flight controllers handle motor mixers and it helps us understand that the PID controller implicitly compensates for the drone’s physical parameters, so that in practice we mainly focus on tuning the drone experimentally.
 
 ## A Note to the Reader
 
