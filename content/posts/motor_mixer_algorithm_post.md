@@ -43,7 +43,7 @@ As shown in Fig. 1, the motor mixer algorithm combines the outputs of the contro
 
 Normally, the desired motor thrust commands from the mixer need to be converted into motor control signals (PWM, UAVCAN, etc.) using a thrust scaling curve. For this hobby quadcopter, however, the PID controller is tuned specifically to output PWM-equivalent commands, so the mixer directly produces PWM motor commands that are fed to the ESCs, as demonstrated in Fig. 2.
 
-{{< figure src="/images/motor-mixer-blog/motor-mixer-normalize.svg"
+{{< figure src="/images/motor-mixer-blog/motor-mixer-my-drone.svg"
 alt="PWM Motor Mixer"
 caption="Fig. 2. Motor mixer algorithm outputs PWM motor commands for this quadcopter." >}}
 
@@ -51,7 +51,9 @@ Therefore, the purpose of the mixer algorithm is to determine the contribution o
 
 ## Find Motor Mixer Algorithm iteratively
 
-The [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as shown in (1). To find the correct combination, we have to use the quadcopter configuration and go through every movement case until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs are provided directly by the controller.
+> _The terms input and command are used interchangeably (e.g., throttle input = throttle command)_
+
+The [manual](https://github.com/CarbonAeronautics/Manual-Quadcopter-Drone) of the Carbon Aeronautics drone explains in detail that the motor mixer for this drone is a linear combination of the throttle, roll, pitch, and yaw inputs, as shown in (1). To find the correct combination, we have to use the quadcopter configuration and analyze each motion scenario until the mixer algorithm is correct. This is a very tedious iterative approach, but it allows us to avoid going through the quadcopter dynamics mathematically. Note that these inputs, also referred to as commands, are provided directly by the controller, as indicated in Fig. 2.
 
 {{< small-matrix-block >}}
 
@@ -75,7 +77,7 @@ $$
 
 {{< /small-matrix-block >}}
 
-For now, let's assume the motor mixer is just the summation of each input without considering the sign of each input. We will add the sign of each input as we consider each case scenario.
+For now, let's assume the motor mixer is simply the sum of all inputs without considering their signs. We will add the appropriate signs as we examine each case.
 
 {{< small-matrix-block >}}
 
@@ -90,7 +92,7 @@ $$
 
 {{< /small-matrix-block >}}
 
-Let's take the rolling case scenario, where we want the quadcopter to roll to the right, see Fig. 3. First, we assume that an input percentage maps directly to a motor power percentage. Suppose the quadcopter is hovering with a throttle input of 50%, which causes each motor to operate at 50% of its power. We then apply a roll input of 20%, while assuming there is no pitch input (0%) and no yaw input (0%) interfering with the roll movement. Therefore, the above placeholder mixer consists only of the throttle and roll inputs.
+Let's consider the rolling case, where we want the quadcopter to roll to the right, see Fig. 3. First, we assume that an input percentage maps directly to a motor power percentage. Suppose the quadcopter is hovering with a throttle input of 50%, which causes each motor to operate at 50% of its power. We then apply a roll input of 20%, while assuming there is no pitch input (0%) and no yaw input (0%) interfering with the roll movement. Therefore, the above placeholder mixer consists only of the throttle and roll inputs.
 
 {{< small-matrix-block >}}
 
@@ -145,7 +147,7 @@ alt="Rolling left"
 caption="Fig. 4. (a) The quadcopter rolling to the left. (b) A 2D representation of the roll motion.$^{1}$"
 class="center-caption" >}}
 
-To obtain the mixers for pitch and yaw movements, we follow the same iterative approach. This is how we arrive at the final motor mixer algorithm in equation (1) for this quadcopter.
+To obtain the mixers for pitch and yaw motions, we follow the same iterative approach. This is how we arrive at the final motor mixer algorithm in equation (1) for this quadcopter.
 
 ## Find Motor Mixer Algorithm mathematically
 
@@ -332,7 +334,7 @@ $$
 \end{bmatrix}
 $$
 
-In the PID controller design, the controller outputs desired $T_{total}$, $\tau_{roll}$, $\tau_{pitch}$, and $\tau_{yaw}$. We represent these quantities by the inputs $u_1$, $u_2$, $u_3$, and $u_4$, respectively. Hence, the motor mixer matrix becomes
+In the PID controller design, the controller produces desired $T_{total}$, $\tau_{roll}$, $\tau_{pitch}$, and $\tau_{yaw}$. We represent these quantities by the inputs $u_1$, $u_2$, $u_3$, and $u_4$, respectively. Hence, the motor mixer matrix becomes
 
 $$
 \begin{bmatrix} T_{1} \\ T_{2} \\ T_{3} \\ T_{4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \frac{1}{4}u_1 \\ \frac{1}{4L_{y}}u_2 \\ \frac{1}{4L_{x}}u_3 \\ \frac{1}{4\gamma}u_4 \end{bmatrix} \tag{28}
@@ -360,12 +362,12 @@ $$
 At this point, we can see that the motor mixer matrix in (29) from the dynamic model is identical to the motor mixer in (2) from the iterative approach. Therefore, the dynamic derivation verifies that the iterative motor mixer is correct.
 
 $$
-\begin{bmatrix} \text{output motor 1} \\ \text{output motor 2} \\ \text{output motor 3} \\ \text{output motor 4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \text{throttle input} \\ \text{roll input} \\ \text{pitch input} \\ \text{yaw input} \end{bmatrix}
+\begin{bmatrix} \text{output motor 1} \\ \text{output motor 2} \\ \text{output motor 3} \\ \text{output motor 4} \end{bmatrix} = \begin{bmatrix} 1 & -1 & -1 & -1 \\ 1 & -1 & 1 & 1 \\ 1 & 1 & 1 & -1 \\ 1 & 1 & -1 & 1 \end{bmatrix} \begin{bmatrix} \text{throttle command} \\ \text{roll command} \\ \text{pitch command} \\ \text{yaw command} \end{bmatrix}
 $$
 
 ## Physical Parameters and PID tuning
 
-We observe that the final motor mixer equation (29) depends on the parameters $\frac{1}{4}$, $L_x$, $L_y$ and $\gamma$. In practice, we can measure these parameters experimentally, but for this hobby quadcopter there is no need to do so because the controller gains are tuned to compensate for their effect. Once this is done, the PID outputs become command inputs rather than thrust and torque commands. Consequently, the final motor mixer operates on these command inputs and produces PWM motor commands.
+We observe that the final motor mixer equation (29) depends on the parameters $\frac{1}{4}$, $L_x$, $L_y$ and $\gamma$. In practice, we can measure these parameters experimentally, but for this hobby quadcopter there is no need to do so because the controller gains are tuned to compensate for their effect. Once this is done, the PID outputs can be interpreted as PWM-equivalent motor command corrections rather than thrust and torque commands. Consequently, the final motor mixer combines these corrections to generate PWM motor commands for the ESCs.
 
 To see how the physical parameters are incorporated into the PID gains, let's consider the roll torque input $u_2$, defined as a continuous-time PID controller
 
@@ -397,7 +399,7 @@ $$
     \tilde{K}_{D} = \frac{1}{4L_{y}}K_{D}
 $$
 
-Then $\tilde{u}_2$ remains a PID controller with scaled gains, producing a command input. Therefore, all we have to do is tune these gains.
+Then $\tilde{u}_2$ remains a PID controller with scaled gains, producing a command. Therefore, all we have to do is tune these gains.
 
 $$
     \tilde{u}_2
@@ -410,7 +412,7 @@ $$
     \tag{32}
 $$
 
-From this example, we see that the physical parameters can be omitted from the motor mixer because their effect is implicitly captured by the PID gains. As a result, the PID outputs become command inputs rather than physical quantities. The main drawback of this approach is that the PID gains must be retuned whenever the propellers, motors, or drone size change.
+From this example, we see that the physical parameters can be omitted from the motor mixer because their effect is implicitly captured by the PID gains. As a result, the PID outputs are interpreted as motor command corrections rather than explicit thrust and torque commands. The main drawback of this approach is that the PID gains must be retuned whenever the propellers, motors, or drone size change.
 
 ## Code Implementation
 
