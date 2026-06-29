@@ -153,14 +153,14 @@ To obtain the mixers for pitch and yaw motions, we follow the same iterative app
 
 From studying the quadcopter rigid-body dynamics, we learned that the translational dynamics of the vehicle depend on the total thrust, $T_{total}$, and the rotational dynamics depend on the three body torques, $\tau_{roll}$, $\tau_{pitch}$, and $\tau_{yaw}$.
 
-By collecting the equations that describe these dynamics, we can form a matrix relationship between the four motor thrusts and the total thrust and three body torques. This relationship is represented by the mixer matrix $M$:
+By collecting the equations that describe these dynamics, we can form a matrix relationship between the four motor thrusts and the total thrust and three body torques. This relationship is represented by the matrix $M$:
 
 $$
 \begin{bmatrix} T_{total} \\ \tau_{roll} \\ \tau_{pitch} \\ \tau_{yaw} \end{bmatrix} = M \begin{bmatrix} T_1 \\ T_2 \\ T_3 \\ T_4 \end{bmatrix}
 \tag{7}
 $$
 
-By inverting the mixer matrix, we can compute the individual motor thrusts required to produce the desired total thrust and body torques.
+By inverting $M$, we obtain the motor mixer matrix, $M^{-1}$, which computes the individual motor thrusts required to produce the desired total thrust and body torques.
 
 $$
 \begin{bmatrix} T_1 \\ T_2 \\ T_3 \\ T_4 \end{bmatrix} =  M^{-1} \begin{bmatrix} T_{total} \\ \tau_{roll} \\ \tau_{pitch} \\ \tau_{yaw} \end{bmatrix}
